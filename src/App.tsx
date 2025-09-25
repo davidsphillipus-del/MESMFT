@@ -12,6 +12,7 @@ import DoctorPortal from './pages/DoctorPortal'
 import NursePortal from './pages/NursePortal'
 import ReceptionistPortal from './pages/ReceptionistPortal'
 import PharmacistPortal from './pages/PharmacistPortal'
+import AdminPortal from './pages/AdminPortal'
 import EducationBot from './pages/EducationBot'
 import DiagnosisBot from './pages/DiagnosisBot'
 import AboutPage from './pages/AboutPage'
@@ -32,28 +33,33 @@ function App() {
 
           {/* Protected routes */}
           <Route path="/patient" element={
-            <ProtectedRoute allowedRoles={['patient']}>
+            <ProtectedRoute allowedRoles={['PATIENT']}>
               <PatientPortal />
             </ProtectedRoute>
           } />
           <Route path="/doctor" element={
-            <ProtectedRoute allowedRoles={['doctor']}>
+            <ProtectedRoute allowedRoles={['DOCTOR']}>
               <DoctorPortal />
             </ProtectedRoute>
           } />
           <Route path="/nurse" element={
-            <ProtectedRoute allowedRoles={['nurse']}>
+            <ProtectedRoute allowedRoles={['NURSE']}>
               <NursePortal />
             </ProtectedRoute>
           } />
           <Route path="/receptionist" element={
-            <ProtectedRoute allowedRoles={['receptionist']}>
+            <ProtectedRoute allowedRoles={['RECEPTIONIST']}>
               <ReceptionistPortal />
             </ProtectedRoute>
           } />
           <Route path="/pharmacist" element={
-            <ProtectedRoute allowedRoles={['pharmacist']}>
+            <ProtectedRoute allowedRoles={['PHARMACIST']}>
               <PharmacistPortal />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminPortal />
             </ProtectedRoute>
           } />
 

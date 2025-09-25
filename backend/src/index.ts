@@ -4,7 +4,7 @@ import app from './simple-app'
 // Load environment variables
 dotenv.config()
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5001
 
 // Start server
 app.listen(PORT, () => {
@@ -12,7 +12,7 @@ app.listen(PORT, () => {
   console.log(`📚 Health check: http://localhost:${PORT}/health`)
   console.log(`🔐 Login endpoint: http://localhost:${PORT}/api/v1/auth/login`)
   console.log(`👥 Users endpoint: http://localhost:${PORT}/api/v1/users`)
-  console.log(`🌱 Seed endpoint: http://localhost:${PORT}/api/v1/seed`)
+  console.log(`🌱 Backend running on: http://localhost:${PORT}`)
   console.log(`🎯 Ready for frontend integration!`)
 })
 

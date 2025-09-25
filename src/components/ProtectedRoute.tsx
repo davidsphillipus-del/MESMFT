@@ -20,13 +20,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (user && !allowedRoles.includes(user.role)) {
     // Redirect to appropriate portal based on user role
     const roleRoutes = {
-      patient: '/patient',
-      doctor: '/doctor',
-      nurse: '/nurse',
-      receptionist: '/receptionist',
-      pharmacist: '/pharmacist'
+      PATIENT: '/patient',
+      DOCTOR: '/doctor',
+      NURSE: '/nurse',
+      RECEPTIONIST: '/receptionist',
+      PHARMACIST: '/pharmacist',
+      ADMIN: '/admin'
     }
-    
+
     const redirectPath = roleRoutes[user.role as keyof typeof roleRoutes] || '/'
     return <Navigate to={redirectPath} replace />
   }
