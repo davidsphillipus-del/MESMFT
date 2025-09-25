@@ -1,0 +1,435 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  PATIENT
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+  PHARMACIST
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum EpisodeStatus {
+  ACTIVE
+  MONITORING
+  RECOVERY
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum PrescriptionStatus {
+  PENDING
+  APPROVED
+  DISPENSED
+  COMPLETED
+  CANCELLED
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+  APPOINTMENT
+  MEDICATION
+  LAB_RESULT
+  SYSTEM
+}
+
+// Core Models
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profile              UserProfile?
+  patientProfile       Patient?
+  doctorEpisodes       Episode[]              @relation("DoctorEpisodes")
+  nurseEpisodes        Episode[]              @relation("NurseEpisodes")
+  doctorAppointments   Appointment[]          @relation("DoctorAppointments")
+  prescriptionsWritten Prescription[]         @relation("PrescriptionsWritten")
+  dispensingQueue      DispensingQueue[]      @relation("PreparedByUser")
+  sentMessages         Message[]              @relation("SentMessages")
+  receivedMessages     Message[]              @relation("ReceivedMessages")
+  notifications        Notification[]
+  nursingNotes         NursingNote[]
+  vitalSigns           VitalSign[]
+  labResults           LabResult[]
+  consultations        PharmacyConsultation[]
+  sessions             UserSession[]
+
+  @@map("users")
+}
+
+model UserProfile {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  firstName        String
+  lastName         String
+  phone            String?
+  address          String?
+  emergencyContact String?
+  avatar           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+model Patient {
+  id          String     @id @default(cuid())
+  userId      String     @unique
+  patientId   String     @unique
+  dateOfBirth DateTime
+  gender      Gender
+  bloodType   BloodType?
+  allergies   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medicalRecords MedicalRecord[]
+  episodes       Episode[]
+  appointments   Appointment[]     @relation("PatientAppointments")
+  prescriptions  Prescription[]    @relation("PatientPrescriptions")
+  vitalSigns     VitalSign[]
+  labResults     LabResult[]
+  consultations  PharmacyConsultation[]
+
+  @@map("patients")
+}
+
+model MedicalRecord {
+  id          String   @id @default(cuid())
+  patientId   String
+  recordType  String
+  title       String
+  description String?
+  data        Json?
+  attachments String[]
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("medical_records")
+}
+
+model Episode {
+  id             String        @id @default(cuid())
+  patientId      String
+  diagnosis      String
+  status         EpisodeStatus @default(ACTIVE)
+  priority       Priority      @default(NORMAL)
+  assignedDoctor String
+  assignedNurse  String?
+  startDate      DateTime      @default(now())
+  endDate        DateTime?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  patient      Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       User          @relation("DoctorEpisodes", fields: [assignedDoctor], references: [id])
+  nurse        User?         @relation("NurseEpisodes", fields: [assignedNurse], references: [id])
+  nursingNotes NursingNote[]
+  prescriptions Prescription[]
+
+  @@map("episodes")
+}
+
+model Appointment {
+  id            String            @id @default(cuid())
+  patientId     String
+  doctorId      String
+  scheduledTime DateTime
+  duration      Int               @default(30) // minutes
+  status        AppointmentStatus @default(SCHEDULED)
+  type          String
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  patient Patient @relation("PatientAppointments", fields: [patientId], references: [userId])
+  doctor  User    @relation("DoctorAppointments", fields: [doctorId], references: [id])
+
+  @@map("appointments")
+}
+
+model Prescription {
+  id           String             @id @default(cuid())
+  patientId    String
+  doctorId     String
+  episodeId    String?
+  medications  Json // Array of medication objects
+  instructions String
+  status       PrescriptionStatus @default(PENDING)
+  issuedAt     DateTime           @default(now())
+  validUntil   DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  // Relations
+  patient         Patient           @relation("PatientPrescriptions", fields: [patientId], references: [userId])
+  doctor          User              @relation("PrescriptionsWritten", fields: [doctorId], references: [id])
+  episode         Episode?          @relation(fields: [episodeId], references: [id])
+  dispensingQueue DispensingQueue[]
+
+  @@map("prescriptions")
+}
+
+model NursingNote {
+  id        String   @id @default(cuid())
+  episodeId String
+  nurseId   String
+  notes     String
+  carePlan  String?
+  timestamp DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  episode Episode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  nurse   User    @relation(fields: [nurseId], references: [id])
+
+  @@map("nursing_notes")
+}
+
+model VitalSign {
+  id             String   @id @default(cuid())
+  patientId      String
+  temperature    Float?
+  bloodPressure  String?
+  heartRate      Int?
+  respiratoryRate Int?
+  oxygenSaturation Float?
+  weight         Float?
+  height         Float?
+  recordedBy     String
+  recordedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  // Relations
+  patient    Patient @relation(fields: [patientId], references: [userId])
+  recordedByUser User @relation(fields: [recordedBy], references: [id])
+
+  @@map("vital_signs")
+}
+
+model LabResult {
+  id             String   @id @default(cuid())
+  patientId      String
+  testType       String
+  testName       String
+  results        Json
+  referenceRanges Json?
+  status         String   @default("COMPLETED")
+  orderedBy      String
+  performedAt    DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  patient   Patient @relation(fields: [patientId], references: [userId])
+  orderedByUser User @relation(fields: [orderedBy], references: [id])
+
+  @@map("lab_results")
+}
+
+model Medication {
+  id              String @id @default(cuid())
+  name            String @unique
+  genericName     String?
+  category        String
+  description     String?
+  dosageForms     String[]
+  contraindications String?
+  sideEffects     String?
+  interactions    String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  inventory Inventory[]
+
+  @@map("medications")
+}
+
+model Inventory {
+  id           String    @id @default(cuid())
+  medicationId String
+  stockQuantity Int
+  minStock     Int       @default(10)
+  maxStock     Int?
+  expiryDate   DateTime
+  batchNumber  String
+  supplier     String?
+  costPerUnit  Float?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  medication Medication @relation(fields: [medicationId], references: [id])
+
+  @@map("inventory")
+}
+
+model DispensingQueue {
+  id             String             @id @default(cuid())
+  prescriptionId String
+  status         String             @default("PENDING") // PENDING, PREPARING, READY, DISPENSED
+  priority       Priority           @default(NORMAL)
+  preparedBy     String?
+  preparedAt     DateTime?
+  dispensedAt    DateTime?
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  // Relations
+  prescription Prescription @relation(fields: [prescriptionId], references: [id])
+  preparedByUser User?      @relation("PreparedByUser", fields: [preparedBy], references: [id])
+
+  @@map("dispensing_queue")
+}
+
+model PharmacyConsultation {
+  id            String   @id @default(cuid())
+  patientId     String
+  pharmacistId  String
+  type          String   // MEDICATION_REVIEW, DRUG_INTERACTION, ADHERENCE_COUNSELING
+  scheduledTime DateTime
+  status        String   @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  medications   String[]
+  concerns      String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  patient    Patient @relation(fields: [patientId], references: [userId])
+  pharmacist User    @relation(fields: [pharmacistId], references: [id])
+
+  @@map("pharmacy_consultations")
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  fromId    String
+  toId      String
+  subject   String
+  content   String
+  status    MessageStatus @default(UNREAD)
+  priority  Priority      @default(NORMAL)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  from User @relation("SentMessages", fields: [fromId], references: [id])
+  to   User @relation("ReceivedMessages", fields: [toId], references: [id])
+
+  @@map("messages")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model SystemAlert {
+  id            String   @id @default(cuid())
+  alertType     String
+  severity      String   // LOW, MEDIUM, HIGH, CRITICAL
+  title         String
+  message       String
+  affectedUsers String[] // Array of user IDs
+  isResolved    Boolean  @default(false)
+  resolvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("system_alerts")
+}
