@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios'
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api/v1'
+const API_BASE_URL = 'http://localhost:5001/api/v1'
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
@@ -80,6 +80,7 @@ export const authAPI = {
     email: string
     password: string
     role: string
+    name: string
     firstName: string
     lastName: string
     phone: string

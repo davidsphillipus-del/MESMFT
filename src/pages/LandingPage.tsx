@@ -369,9 +369,9 @@ const LandingPage: React.FC = () => {
             </p>
             <div style={{ display: 'flex', gap: 'var(--spacing-4)', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link to="/register">
-                <Button 
-                  variant="secondary" 
-                  style={{ 
+                <Button
+                  variant="secondary"
+                  style={{
                     padding: 'var(--spacing-4) var(--spacing-8)',
                     backgroundColor: 'white',
                     color: 'var(--primary-600)'

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
 import { TopProfile } from '../components/layout/TopProfile'
 import { SectionCard } from '../components/layout/SectionCard'
 import { Navigation } from '../components/layout/Navigation'
@@ -12,6 +12,7 @@ import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
 import { api, mockData } from '../services/mockApi'
+import InteractiveDashboard from '../components/dashboard/InteractiveDashboard'
 import { 
   Calendar, 
   FileText, 
@@ -28,9 +29,10 @@ import styles from '../styles/layout.module.css'
 
 const NAVIGATION_ITEMS = [
   { id: 'home', label: 'Home', icon: <User /> },
-  { id: 'episodes', label: 'Medical Episodes', icon: <Activity /> },
+  { id: 'interactive', label: 'Quick Actions', icon: <Activity /> },
+  { id: 'episodes', label: 'Medical Episodes', icon: <FileText /> },
   { id: 'appointments', label: 'Appointments', icon: <Calendar /> },
-  { id: 'records', label: 'Medical Records', icon: <FileText /> },
+  { id: 'records', label: 'Medical Records', icon: <Heart /> },
   { id: 'bots', label: 'Health Tools', icon: <Brain /> }
 ]
 
@@ -44,19 +46,30 @@ const PatientPortal: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [episodesData, appointmentsData] = await Promise.all([
-          api.get('/episodes'),
-          api.get('/appointments')
+        // Use real API endpoints
+        const [episodesResponse, appointmentsResponse] = await Promise.all([
+          fetch(`http://localhost:5001/api/v1/episodes?patientId=${user?.id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          }),
+          fetch(`http://localhost:5001/api/v1/appointments?patientId=${user?.id}`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          })
         ])
-        
-        // Filter data for current patient
-        const patientEpisodes = episodesData.filter((ep: any) => ep.patientId === user?.id)
-        const patientAppointments = appointmentsData.filter((apt: any) => apt.patientId === user?.id)
-        
-        setEpisodes(patientEpisodes)
-        setAppointments(patientAppointments)
+
+        const episodesData = await episodesResponse.json()
+        const appointmentsData = await appointmentsResponse.json()
+
+        setEpisodes(episodesData.data || [])
+        setAppointments(appointmentsData.data || [])
       } catch (error) {
         console.error('Failed to load patient data:', error)
+        // Fallback to mock data if API fails
+        const episodesData = mockData.episodes || []
+        const appointmentsData = mockData.appointments || []
+        const patientEpisodes = episodesData.filter((ep: any) => ep.patientId === user?.id)
+        const patientAppointments = appointmentsData.filter((apt: any) => apt.patientId === user?.id)
+        setEpisodes(patientEpisodes)
+        setAppointments(patientAppointments)
       } finally {
         setIsLoading(false)
       }
@@ -566,6 +579,8 @@ const PatientPortal: React.FC = () => {
     switch (activeView) {
       case 'home':
         return renderHomeView()
+      case 'interactive':
+        return <InteractiveDashboard />
       case 'episodes':
         return renderEpisodesView()
       case 'appointments':
@@ -586,6 +601,9 @@ const PatientPortal: React.FC = () => {
         subtitle="Your Personal Health Dashboard"
         userInfo={user.name}
         userRole="patient"
+        showBackButton={activeView !== 'home'}
+        showHomeButton={activeView !== 'home'}
+        onBack={() => setActiveView('home')}
       />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>

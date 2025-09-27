@@ -4,11 +4,14 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
-import { 
-  Brain, 
-  Send, 
-  ArrowLeft, 
-  User, 
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
+import { useAuth } from '../contexts/AuthContext'
+import {
+  Brain,
+  Send,
+  ArrowLeft,
+  User,
   Bot,
   BookOpen,
   Lightbulb,
@@ -48,6 +51,7 @@ const SAMPLE_RESPONSES = {
 }
 
 const EducationBot: React.FC = () => {
+  const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -146,28 +150,14 @@ const EducationBot: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.headerBrand}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
-              <Brain style={{ width: '32px', height: '32px', color: 'var(--secondary-600)' }} />
-              <div>
-                <div className={styles.headerTitle}>Education Bot</div>
-                <div className={styles.headerSubtitle}>Your Health Learning Assistant</div>
-              </div>
-            </div>
-          </div>
-          <div className={styles.headerActions}>
-            <Link to="/">
-              <Button variant="ghost">
-                <ArrowLeft style={{ width: '16px', height: '16px' }} />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header
+        title="🧠 Education Bot"
+        subtitle="Your Health Learning Assistant"
+        userInfo={user?.name}
+        userRole={user?.role?.toLowerCase()}
+        showBackButton={true}
+        showHomeButton={true}
+      />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>
         <div className={styles.container}>
@@ -379,6 +369,8 @@ const EducationBot: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

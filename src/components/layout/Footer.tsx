@@ -5,10 +5,12 @@ interface FooterProps {
   text?: string
 }
 
-export const Footer: React.FC<FooterProps> = ({ text = '© 2025 MESMTF' }) => {
+const Footer: React.FC<FooterProps> = ({ text = '© 2025 MESMTF' }) => {
   return (
     <footer className={styles.footer}>
       {text}
     </footer>
   )
 }
+
+export default Footer

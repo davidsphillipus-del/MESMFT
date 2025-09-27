@@ -7,6 +7,7 @@ interface User {
   role: 'PATIENT' | 'DOCTOR' | 'NURSE' | 'RECEPTIONIST' | 'PHARMACIST' | 'ADMIN'
   firstName: string
   lastName: string
+  name: string
   avatar?: string
   profile?: {
     firstName: string
@@ -25,6 +26,7 @@ interface RegisterData {
   email: string
   password: string
   role: string
+  name: string
   firstName: string
   lastName: string
   phone: string
@@ -145,13 +147,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (token) {
         try {
           const response = await authAPI.getProfile()
+          const firstName = response.data.firstName || ''
+          const lastName = response.data.lastName || ''
           const user = {
-            id: response.data.id,
+            id: response.data.id.toString(),
             email: response.data.email,
             role: response.data.role,
-            firstName: response.data.profile?.firstName || '',
-            lastName: response.data.profile?.lastName || '',
-            profile: response.data.profile
+            firstName,
+            lastName,
+            name: `${firstName} ${lastName}`.trim(),
+            profile: {
+              firstName,
+              lastName,
+              phone: response.data.phone || ''
+            }
           }
           dispatch({ type: 'RESTORE_SESSION', payload: { user, token } })
         } catch (error) {
@@ -188,13 +197,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('refreshToken', response.data.refreshToken)
 
       // Create user object
+      const firstName = response.data.user.firstName || ''
+      const lastName = response.data.user.lastName || ''
       const user = {
-        id: response.data.user.id,
+        id: response.data.user.id.toString(),
         email: response.data.user.email,
         role: response.data.user.role,
-        firstName: response.data.user.profile?.firstName || '',
-        lastName: response.data.user.profile?.lastName || '',
-        profile: response.data.user.profile
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        profile: {
+          firstName,
+          lastName,
+          phone: response.data.user.phone || ''
+        }
       }
 
       dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token: response.data.accessToken } })
@@ -215,13 +231,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('refreshToken', response.data.refreshToken)
 
       // Create user object
+      const firstName = response.data.user.firstName || ''
+      const lastName = response.data.user.lastName || ''
       const user = {
-        id: response.data.user.id,
+        id: response.data.user.id.toString(),
         email: response.data.user.email,
         role: response.data.user.role,
-        firstName: response.data.user.profile?.firstName || '',
-        lastName: response.data.user.profile?.lastName || '',
-        profile: response.data.user.profile
+        firstName,
+        lastName,
+        name: `${firstName} ${lastName}`.trim(),
+        profile: {
+          firstName,
+          lastName,
+          phone: response.data.user.phone || ''
+        }
       }
 
       dispatch({ type: 'REGISTER_SUCCESS', payload: { user, token: response.data.accessToken } })

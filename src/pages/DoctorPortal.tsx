@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
 import { TopProfile } from '../components/layout/TopProfile'
 import { SectionCard } from '../components/layout/SectionCard'
 import { Navigation } from '../components/layout/Navigation'
@@ -12,6 +12,7 @@ import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
 import { api, mockData } from '../services/mockApi'
+import InteractiveDashboard from '../components/dashboard/InteractiveDashboard'
 import { 
   Users, 
   Activity, 
@@ -28,7 +29,8 @@ import styles from '../styles/layout.module.css'
 
 const NAVIGATION_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: <Stethoscope /> },
-  { id: 'episodes', label: 'Treatment Episodes', icon: <Activity /> },
+  { id: 'interactive', label: 'Interactive Tools', icon: <Activity /> },
+  { id: 'episodes', label: 'Treatment Episodes', icon: <FileText /> },
   { id: 'patients', label: 'My Patients', icon: <Users /> },
   { id: 'appointments', label: 'Appointments', icon: <Calendar /> },
   { id: 'tools', label: 'Clinical Tools', icon: <Brain /> }
@@ -45,17 +47,32 @@ const DoctorPortal: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [episodesData, patientsData, appointmentsData] = await Promise.all([
-          api.get('/episodes'),
-          api.get('/patients'),
-          api.get('/appointments')
+        // Use real API endpoints
+        const [episodesResponse, patientsResponse, appointmentsResponse] = await Promise.all([
+          fetch('http://localhost:5001/api/v1/episodes', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          }),
+          fetch('http://localhost:5001/api/v1/patients', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          }),
+          fetch('http://localhost:5001/api/v1/appointments', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          })
         ])
-        
-        setEpisodes(episodesData)
-        setPatients(patientsData)
-        setAppointments(appointmentsData)
+
+        const episodesData = await episodesResponse.json()
+        const patientsData = await patientsResponse.json()
+        const appointmentsData = await appointmentsResponse.json()
+
+        setEpisodes(episodesData.data || [])
+        setPatients(patientsData.data || [])
+        setAppointments(appointmentsData.data || [])
       } catch (error) {
         console.error('Failed to load doctor data:', error)
+        // Fallback to mock data if API fails
+        setEpisodes(mockData.episodes || [])
+        setPatients(mockData.patients || [])
+        setAppointments(mockData.appointments || [])
       } finally {
         setIsLoading(false)
       }
@@ -584,6 +601,8 @@ const DoctorPortal: React.FC = () => {
     switch (activeView) {
       case 'dashboard':
         return renderDashboardView()
+      case 'interactive':
+        return <InteractiveDashboard />
       case 'episodes':
         return renderEpisodesView()
       case 'patients':
@@ -604,6 +623,9 @@ const DoctorPortal: React.FC = () => {
         subtitle="Clinical Dashboard & Patient Management"
         userInfo={user.name}
         userRole="doctor"
+        showBackButton={activeView !== 'dashboard'}
+        showHomeButton={activeView !== 'dashboard'}
+        onBack={() => setActiveView('dashboard')}
       />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>

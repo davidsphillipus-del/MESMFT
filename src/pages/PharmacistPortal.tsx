@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
 import { TopProfile } from '../components/layout/TopProfile'
 import { SectionCard } from '../components/layout/SectionCard'
 import { Navigation } from '../components/layout/Navigation'
@@ -693,6 +693,10 @@ const PharmacistPortal: React.FC = () => {
         title="Pharmacist Portal"
         subtitle="Prescription Management & Pharmaceutical Care"
         userInfo={user.name}
+        userRole="pharmacist"
+        showBackButton={activeView !== 'dashboard'}
+        showHomeButton={activeView !== 'dashboard'}
+        onBack={() => setActiveView('dashboard')}
       />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>

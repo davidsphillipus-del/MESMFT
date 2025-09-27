@@ -4,12 +4,15 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
+import { useAuth } from '../contexts/AuthContext'
 import { diagnosisService, DiagnosisResponse } from '../services/diagnosisService'
-import { 
-  Stethoscope, 
-  Send, 
-  ArrowLeft, 
-  User, 
+import {
+  Stethoscope,
+  Send,
+  ArrowLeft,
+  User,
   Bot,
   AlertTriangle,
   CheckCircle,
@@ -34,6 +37,7 @@ const COMMON_SYMPTOMS = [
 ]
 
 const DiagnosisBot: React.FC = () => {
+  const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -289,28 +293,14 @@ const DiagnosisBot: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.headerBrand}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
-              <Stethoscope style={{ width: '32px', height: '32px', color: 'var(--red-600)' }} />
-              <div>
-                <div className={styles.headerTitle}>Diagnosis Bot</div>
-                <div className={styles.headerSubtitle}>AI-Powered Symptom Analysis</div>
-              </div>
-            </div>
-          </div>
-          <div className={styles.headerActions}>
-            <Link to="/">
-              <Button variant="ghost">
-                <ArrowLeft style={{ width: '16px', height: '16px' }} />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header
+        title="🩺 Diagnosis Bot"
+        subtitle="AI-Powered Symptom Analysis"
+        userInfo={user?.name}
+        userRole={user?.role?.toLowerCase()}
+        showBackButton={true}
+        showHomeButton={true}
+      />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>
         <div className={styles.container}>
@@ -543,6 +533,8 @@ const DiagnosisBot: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   )
 }

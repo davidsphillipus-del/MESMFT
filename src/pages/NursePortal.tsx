@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
 import { TopProfile } from '../components/layout/TopProfile'
 import { SectionCard } from '../components/layout/SectionCard'
 import { Navigation } from '../components/layout/Navigation'
@@ -43,15 +43,26 @@ const NursePortal: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [episodesData, patientsData] = await Promise.all([
-          api.get('/episodes'),
-          api.get('/patients')
+        // Use real API endpoints
+        const [episodesResponse, patientsResponse] = await Promise.all([
+          fetch('http://localhost:5001/api/v1/episodes', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          }),
+          fetch('http://localhost:5001/api/v1/patients', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          })
         ])
-        
-        setEpisodes(episodesData)
-        setPatients(patientsData)
+
+        const episodesData = await episodesResponse.json()
+        const patientsData = await patientsResponse.json()
+
+        setEpisodes(episodesData.data || [])
+        setPatients(patientsData.data || [])
       } catch (error) {
         console.error('Failed to load nurse data:', error)
+        // Fallback to mock data if API fails
+        setEpisodes(mockData.episodes || [])
+        setPatients(mockData.patients || [])
       } finally {
         setIsLoading(false)
       }
@@ -544,6 +555,10 @@ const NursePortal: React.FC = () => {
         title="Nurse Portal"
         subtitle="Patient Care & Clinical Protocols"
         userInfo={user.name}
+        userRole="nurse"
+        showBackButton={activeView !== 'dashboard'}
+        showHomeButton={activeView !== 'dashboard'}
+        onBack={() => setActiveView('dashboard')}
       />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>

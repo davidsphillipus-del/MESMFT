@@ -22,11 +22,12 @@ const LoginPage: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       const roleRoutes = {
-        patient: '/patient',
-        doctor: '/doctor',
-        nurse: '/nurse',
-        receptionist: '/receptionist',
-        pharmacist: '/pharmacist'
+        PATIENT: '/patient',
+        DOCTOR: '/doctor',
+        NURSE: '/nurse',
+        RECEPTIONIST: '/receptionist',
+        PHARMACIST: '/pharmacist',
+        ADMIN: '/admin'
       }
       const redirectPath = roleRoutes[user.role as keyof typeof roleRoutes] || '/'
       navigate(redirectPath, { replace: true })
@@ -141,8 +142,8 @@ const LoginPage: React.FC = () => {
               <div style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-2)' }}>
                 Demo Credentials:
               </div>
-              <div>Email: Any user email (e.g., nangula@example.com)</div>
-              <div>Password: password123</div>
+              <div>Email: dr.michael.brown@hospital.com</div>
+              <div>Password: healthcare123</div>
             </div>
 
             {/* Login Form */}

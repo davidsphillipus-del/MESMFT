@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Header } from '../components/layout/Header'
-import { Footer } from '../components/layout/Footer'
+import Header from '../components/layout/Header'
+import Footer from '../components/layout/Footer'
 import { TopProfile } from '../components/layout/TopProfile'
 import { SectionCard } from '../components/layout/SectionCard'
 import { Navigation } from '../components/layout/Navigation'
@@ -44,15 +44,26 @@ const ReceptionistPortal: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [appointmentsData, patientsData] = await Promise.all([
-          api.get('/appointments'),
-          api.get('/patients')
+        // Use real API endpoints
+        const [appointmentsResponse, patientsResponse] = await Promise.all([
+          fetch('http://localhost:5001/api/v1/appointments', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          }),
+          fetch('http://localhost:5001/api/v1/patients', {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          })
         ])
-        
-        setAppointments(appointmentsData)
-        setPatients(patientsData)
+
+        const appointmentsData = await appointmentsResponse.json()
+        const patientsData = await patientsResponse.json()
+
+        setAppointments(appointmentsData.data || [])
+        setPatients(patientsData.data || [])
       } catch (error) {
         console.error('Failed to load receptionist data:', error)
+        // Fallback to mock data if API fails
+        setAppointments(mockData.appointments || [])
+        setPatients(mockData.patients || [])
       } finally {
         setIsLoading(false)
       }
@@ -538,6 +549,10 @@ const ReceptionistPortal: React.FC = () => {
         title="Receptionist Portal"
         subtitle="Front Desk Operations & Patient Management"
         userInfo={user.name}
+        userRole="receptionist"
+        showBackButton={activeView !== 'dashboard'}
+        showHomeButton={activeView !== 'dashboard'}
+        onBack={() => setActiveView('dashboard')}
       />
 
       <main style={{ padding: 'var(--spacing-6) 0' }}>

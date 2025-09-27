@@ -17,10 +17,11 @@ export const TopProfile: React.FC<TopProfileProps> = ({
 }) => {
   // Generate initials from name
   const initials = name
-    .split(' ')
-    .map(n => n[0])
-    .slice(0, 2)
-    .join('')
+    ? name.split(' ')
+        .map(n => n[0])
+        .slice(0, 2)
+        .join('')
+    : '??'
 
   const avatarClass = variant === 'green'
     ? `${styles.profileAvatar} ${styles.profileAvatarGreen}`
