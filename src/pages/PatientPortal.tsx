@@ -12,19 +12,20 @@ import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
 import { api, mockData } from '../services/mockApi'
-import InteractiveDashboard from '../components/dashboard/InteractiveDashboard'
+import PatientQuickActions from '../components/patient/PatientQuickActions'
 import DoctorSearch from '../components/search/DoctorSearch'
-import { 
-  Calendar, 
-  FileText, 
-  Activity, 
-  Heart, 
-  Brain, 
+import {
+  Calendar,
+  FileText,
+  Activity,
+  Heart,
+  Brain,
   Stethoscope,
   Search,
   Download,
   Clock,
-  User
+  User,
+  Plus
 } from 'lucide-react'
 import styles from '../styles/layout.module.css'
 
@@ -148,23 +149,71 @@ const PatientPortal: React.FC = () => {
           </Button>
         }
       >
-        {appointments.slice(0, 3).map((appointment) => (
-          <Card key={appointment.id} style={{ marginBottom: 'var(--spacing-3)' }}>
-            <CardContent style={{ padding: 'var(--spacing-4)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
-                <div style={{ fontWeight: 'var(--font-weight-medium)' }}>
-                  {appointment.doctorName}
+        {appointments.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: 'var(--spacing-8)',
+            color: 'var(--text-secondary)',
+            backgroundColor: 'var(--gray-50)',
+            borderRadius: 'var(--border-radius-md)',
+            border: '1px dashed var(--border-color)'
+          }}>
+            <Calendar style={{ width: '48px', height: '48px', margin: '0 auto var(--spacing-4)', color: 'var(--text-tertiary)' }} />
+            <h4 style={{ fontSize: 'var(--font-size-md)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-2)' }}>
+              No upcoming appointments
+            </h4>
+            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-4)' }}>
+              Schedule your next healthcare visit to stay on top of your health
+            </p>
+            <Button variant="primary" size="sm" onClick={() => setActiveView('appointments')}>
+              Book Appointment
+            </Button>
+          </div>
+        ) : (
+          appointments.slice(0, 3).map((appointment) => (
+            <Card key={appointment.id} style={{ marginBottom: 'var(--spacing-4)' }}>
+              <CardContent style={{ padding: 'var(--spacing-5)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-3)' }}>
+                  <div>
+                    <h4 style={{
+                      fontSize: 'var(--font-size-md)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      marginBottom: 'var(--spacing-1)',
+                      color: 'var(--text-primary)'
+                    }}>
+                      Dr. {appointment.doctorFirstName} {appointment.doctorLastName}
+                    </h4>
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-2)'
+                    }}>
+                      <Calendar style={{ width: '14px', height: '14px' }} />
+                      {new Date(appointment.date + ' ' + appointment.time).toLocaleDateString()} at {appointment.time}
+                    </div>
+                  </div>
+                  <Badge variant={appointment.status === 'scheduled' ? 'success' : 'warning'}>
+                    {appointment.status}
+                  </Badge>
                 </div>
-                <Badge variant={appointment.status === 'Confirmed' ? 'success' : 'warning'}>
-                  {appointment.status}
-                </Badge>
-              </div>
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                {appointment.type} - {new Date(appointment.datetime).toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                {appointment.notes && (
+                  <div style={{
+                    fontSize: 'var(--font-size-sm)',
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'var(--gray-50)',
+                    padding: 'var(--spacing-3)',
+                    borderRadius: 'var(--border-radius-sm)',
+                    marginTop: 'var(--spacing-2)'
+                  }}>
+                    <strong>Notes:</strong> {appointment.notes}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </SectionCard>
 
       {/* Health Tools */}
@@ -173,32 +222,110 @@ const PatientPortal: React.FC = () => {
         subtitle="AI-powered tools for your health journey"
         icon={<Brain />}
       >
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--spacing-4)' }}>
-          <Card style={{ cursor: 'pointer', transition: 'transform 0.2s ease-in-out' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--spacing-5)' }}>
+          <Card
+            style={{
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius-lg)'
+            }}
+            onClick={() => setActiveView('bots')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)'
+              e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)'
+              e.currentTarget.style.borderColor = 'var(--primary-300)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              e.currentTarget.style.borderColor = 'var(--border-color)'
+            }}
+          >
             <CardContent style={{ padding: 'var(--spacing-6)', textAlign: 'center' }}>
-              <Brain style={{ width: '32px', height: '32px', color: 'var(--secondary-600)', marginBottom: 'var(--spacing-3)' }} />
-              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-2)' }}>
-                Education Bot
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--green-100)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--spacing-4)'
+              }}>
+                <Brain style={{ width: '32px', height: '32px', color: 'var(--green-600)' }} />
+              </div>
+              <h3 style={{
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                marginBottom: 'var(--spacing-2)',
+                color: 'var(--text-primary)'
+              }}>
+                Health Education
               </h3>
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-4)' }}>
-                Learn about diseases, prevention, and treatment options
+              <p style={{
+                fontSize: 'var(--font-size-sm)',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--spacing-4)',
+                lineHeight: '1.5'
+              }}>
+                Learn about malaria prevention, symptoms, and treatment from our AI health educator
               </p>
-              <Button variant="success" size="sm" style={{ width: '100%' }}>
+              <Button variant="success" size="sm" style={{ width: '100%', padding: 'var(--spacing-3) var(--spacing-4)' }}>
                 Start Learning
               </Button>
             </CardContent>
           </Card>
 
-          <Card style={{ cursor: 'pointer', transition: 'transform 0.2s ease-in-out' }}>
+          <Card
+            style={{
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius-lg)'
+            }}
+            onClick={() => setActiveView('bots')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)'
+              e.currentTarget.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)'
+              e.currentTarget.style.borderColor = 'var(--red-300)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)'
+              e.currentTarget.style.borderColor = 'var(--border-color)'
+            }}
+          >
             <CardContent style={{ padding: 'var(--spacing-6)', textAlign: 'center' }}>
-              <Stethoscope style={{ width: '32px', height: '32px', color: 'var(--red-600)', marginBottom: 'var(--spacing-3)' }} />
-              <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-2)' }}>
-                Symptom Checker
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--red-100)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto var(--spacing-4)'
+              }}>
+                <Stethoscope style={{ width: '32px', height: '32px', color: 'var(--red-600)' }} />
+              </div>
+              <h3 style={{
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                marginBottom: 'var(--spacing-2)',
+                color: 'var(--text-primary)'
+              }}>
+                AI Diagnosis Assistant
               </h3>
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--spacing-4)' }}>
-                Get preliminary health assessments based on symptoms
+              <p style={{
+                fontSize: 'var(--font-size-sm)',
+                color: 'var(--text-secondary)',
+                marginBottom: 'var(--spacing-4)',
+                lineHeight: '1.5'
+              }}>
+                Get preliminary health assessments and symptom analysis from our AI doctor
               </p>
-              <Button variant="danger" size="sm" style={{ width: '100%' }}>
+              <Button variant="danger" size="sm" style={{ width: '100%', padding: 'var(--spacing-3) var(--spacing-4)' }}>
                 Check Symptoms
               </Button>
             </CardContent>
@@ -209,120 +336,281 @@ const PatientPortal: React.FC = () => {
   )
 
   const renderEpisodesView = () => (
-    <SectionCard
-      title="Medical Episodes"
-      subtitle="Complete history of your healthcare interactions"
-      icon={<Activity />}
-      actions={
-        <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
-          <Input placeholder="Search episodes..." style={{ width: '200px' }} />
-          <Button variant="outline" size="sm">
-            <Search style={{ width: '16px', height: '16px' }} />
-          </Button>
-        </div>
-      }
-    >
-      {episodes.map((episode) => (
-        <Card key={episode.id} style={{ marginBottom: 'var(--spacing-4)' }}>
-          <CardContent style={{ padding: 'var(--spacing-6)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
-              <div>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)' }}>
-                  Episode {episode.id}
-                </h3>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                  {new Date(episode.createdAt).toLocaleDateString()}
+    <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
+      <SectionCard
+        title="Medical Episodes"
+        subtitle="Complete history of your healthcare interactions"
+        icon={<Activity />}
+        actions={
+          <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+            <Input placeholder="Search episodes..." style={{ width: '200px' }} />
+            <Button variant="outline" size="sm">
+              <Search style={{ width: '16px', height: '16px' }} />
+            </Button>
+          </div>
+        }
+      >
+        {episodes.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: 'var(--spacing-12)',
+            color: 'var(--text-secondary)',
+            backgroundColor: 'var(--gray-50)',
+            borderRadius: 'var(--border-radius-lg)',
+            border: '1px dashed var(--border-color)'
+          }}>
+            <Activity style={{ width: '64px', height: '64px', margin: '0 auto var(--spacing-4)', color: 'var(--text-tertiary)' }} />
+            <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-2)' }}>
+              No medical episodes yet
+            </h3>
+            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-4)' }}>
+              Your medical episodes will appear here as you receive care from healthcare providers
+            </p>
+            <Button variant="primary" size="sm" onClick={() => setActiveView('appointments')}>
+              Book Your First Appointment
+            </Button>
+          </div>
+        ) : (
+          episodes.map((episode) => (
+            <Card key={episode.id} style={{
+              marginBottom: 'var(--spacing-5)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius-lg)',
+              overflow: 'hidden'
+            }}>
+              <CardContent style={{ padding: 'var(--spacing-6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-4)' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: 'var(--font-size-lg)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--text-primary)'
+                    }}>
+                      {episode.title || `Medical Episode #${episode.id}`}
+                    </h3>
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-2)'
+                    }}>
+                      <Clock style={{ width: '14px', height: '14px' }} />
+                      {new Date(episode.createdAt).toLocaleDateString()}
+                      {episode.priority && (
+                        <>
+                          <span>•</span>
+                          <span style={{ color: episode.priority === 'High' ? 'var(--red-600)' : 'var(--text-secondary)' }}>
+                            {episode.priority} Priority
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant={episode.status === 'Open' ? 'warning' : 'success'} size="lg">
+                    {episode.status}
+                  </Badge>
                 </div>
-              </div>
-              <Badge variant={episode.status === 'Open' ? 'warning' : 'success'}>
-                {episode.status}
-              </Badge>
-            </div>
-            
-            <div style={{ marginBottom: 'var(--spacing-4)' }}>
-              <p style={{ color: 'var(--text-secondary)', lineHeight: 'var(--line-height-relaxed)' }}>
-                {episode.summary}
-              </p>
-            </div>
 
-            {episode.participants && episode.participants.length > 0 && (
-              <div style={{ marginBottom: 'var(--spacing-4)' }}>
-                <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-2)' }}>
-                  Healthcare Team:
-                </div>
-                <div style={{ display: 'flex', gap: 'var(--spacing-2)', flexWrap: 'wrap' }}>
-                  {episode.participants.map((participant: any, index: number) => (
-                    <Badge key={index} variant="secondary">
-                      {participant.name} ({participant.role})
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+                {episode.description && (
+                  <div style={{
+                    marginBottom: 'var(--spacing-4)',
+                    padding: 'var(--spacing-4)',
+                    backgroundColor: 'var(--gray-50)',
+                    borderRadius: 'var(--border-radius-md)',
+                    border: '1px solid var(--gray-200)'
+                  }}>
+                    <h4 style={{
+                      fontSize: 'var(--font-size-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--text-primary)'
+                    }}>
+                      Description:
+                    </h4>
+                    <p style={{
+                      color: 'var(--text-secondary)',
+                      lineHeight: '1.5',
+                      margin: 0,
+                      fontSize: 'var(--font-size-sm)'
+                    }}>
+                      {episode.description}
+                    </p>
+                  </div>
+                )}
 
-            <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
-              <Button variant="outline" size="sm">
-                <Download style={{ width: '16px', height: '16px' }} />
-                Download Report
-              </Button>
-              <Button variant="primary" size="sm">
-                View Details
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </SectionCard>
+                {episode.doctorFirstName && (
+                  <div style={{ marginBottom: 'var(--spacing-4)' }}>
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--text-primary)'
+                    }}>
+                      Healthcare Provider:
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)' }}>
+                      <User style={{ width: '16px', height: '16px', color: 'var(--text-secondary)' }} />
+                      <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                        Dr. {episode.doctorFirstName} {episode.doctorLastName}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{
+                  display: 'flex',
+                  gap: 'var(--spacing-2)',
+                  justifyContent: 'flex-end',
+                  paddingTop: 'var(--spacing-4)',
+                  borderTop: '1px solid var(--gray-200)'
+                }}>
+                  <Button variant="outline" size="sm">
+                    <Download style={{ width: '16px', height: '16px' }} />
+                    Download Report
+                  </Button>
+                  <Button variant="primary" size="sm">
+                    View Details
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </SectionCard>
+    </div>
   )
 
   const renderAppointmentsView = () => (
-    <SectionCard
-      title="Appointments"
-      subtitle="Manage your healthcare appointments"
-      icon={<Calendar />}
-      actions={
-        <Button variant="primary" size="sm">
-          Book New Appointment
-        </Button>
-      }
-    >
-      {appointments.map((appointment) => (
-        <Card key={appointment.id} style={{ marginBottom: 'var(--spacing-4)' }}>
-          <CardContent style={{ padding: 'var(--spacing-6)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
-              <div>
-                <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)' }}>
-                  {appointment.doctorName}
-                </h3>
-                <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                  {appointment.type}
+    <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
+      <SectionCard
+        title="Your Appointments"
+        subtitle="Manage your healthcare appointments and schedule new visits"
+        icon={<Calendar />}
+        actions={
+          <Button variant="primary" size="sm" onClick={() => setActiveView('doctors')}>
+            <Plus style={{ width: '16px', height: '16px' }} />
+            Book New Appointment
+          </Button>
+        }
+      >
+        {appointments.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: 'var(--spacing-12)',
+            color: 'var(--text-secondary)',
+            backgroundColor: 'var(--gray-50)',
+            borderRadius: 'var(--border-radius-lg)',
+            border: '1px dashed var(--border-color)'
+          }}>
+            <Calendar style={{ width: '64px', height: '64px', margin: '0 auto var(--spacing-4)', color: 'var(--text-tertiary)' }} />
+            <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-2)' }}>
+              No appointments scheduled
+            </h3>
+            <p style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-4)' }}>
+              Book your first appointment to start your healthcare journey
+            </p>
+            <Button variant="primary" size="sm" onClick={() => setActiveView('doctors')}>
+              Find a Doctor
+            </Button>
+          </div>
+        ) : (
+          appointments.map((appointment) => (
+            <Card key={appointment.id} style={{
+              marginBottom: 'var(--spacing-5)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius-lg)',
+              overflow: 'hidden'
+            }}>
+              <CardContent style={{ padding: 'var(--spacing-6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--spacing-4)' }}>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{
+                      fontSize: 'var(--font-size-lg)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--text-primary)'
+                    }}>
+                      Dr. {appointment.doctorFirstName} {appointment.doctorLastName}
+                    </h3>
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-2)',
+                      marginBottom: 'var(--spacing-2)'
+                    }}>
+                      <Clock style={{ width: '14px', height: '14px' }} />
+                      {new Date(appointment.date + ' ' + appointment.time).toLocaleDateString()} at {appointment.time}
+                    </div>
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      color: 'var(--text-secondary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--spacing-2)'
+                    }}>
+                      <User style={{ width: '14px', height: '14px' }} />
+                      Appointment ID: {appointment.id}
+                    </div>
+                  </div>
+                  <Badge variant={appointment.status === 'scheduled' ? 'success' : 'warning'} size="lg">
+                    {appointment.status}
+                  </Badge>
                 </div>
-              </div>
-              <Badge variant={appointment.status === 'Confirmed' ? 'success' : 'warning'}>
-                {appointment.status}
-              </Badge>
-            </div>
 
-            <div style={{ marginBottom: 'var(--spacing-4)' }}>
-              <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                <Clock style={{ width: '16px', height: '16px', display: 'inline', marginRight: 'var(--spacing-1)' }} />
-                {new Date(appointment.datetime).toLocaleString()}
-              </div>
-            </div>
+                {appointment.notes && (
+                  <div style={{
+                    marginBottom: 'var(--spacing-4)',
+                    padding: 'var(--spacing-4)',
+                    backgroundColor: 'var(--blue-50)',
+                    borderRadius: 'var(--border-radius-md)',
+                    border: '1px solid var(--blue-200)'
+                  }}>
+                    <h4 style={{
+                      fontSize: 'var(--font-size-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--blue-800)'
+                    }}>
+                      Appointment Notes:
+                    </h4>
+                    <p style={{
+                      color: 'var(--blue-700)',
+                      margin: 0,
+                      fontSize: 'var(--font-size-sm)'
+                    }}>
+                      {appointment.notes}
+                    </p>
+                  </div>
+                )}
 
-            <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
-              <Button variant="outline" size="sm">
-                Reschedule
-              </Button>
-              <Button variant="danger" size="sm">
-                Cancel
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </SectionCard>
-  )
+                <div style={{
+                  display: 'flex',
+                  gap: 'var(--spacing-2)',
+                  justifyContent: 'flex-end',
+                  paddingTop: 'var(--spacing-4)',
+                  borderTop: '1px solid var(--gray-200)'
+                }}>
+                    <Button variant="outline" size="sm">
+                      Reschedule
+                    </Button>
+                    <Button variant="danger" size="sm">
+                      Cancel Appointment
+                    </Button>
+                    <Button variant="primary" size="sm">
+                      View Details
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </SectionCard>
+      </div>
+    )
 
   const renderDoctorSearchView = () => {
     const handleSelectDoctor = (doctor: any) => {
@@ -640,7 +928,7 @@ const PatientPortal: React.FC = () => {
       case 'home':
         return renderHomeView()
       case 'interactive':
-        return <InteractiveDashboard />
+        return <PatientQuickActions onNavigate={setActiveView} />
       case 'episodes':
         return renderEpisodesView()
       case 'appointments':
