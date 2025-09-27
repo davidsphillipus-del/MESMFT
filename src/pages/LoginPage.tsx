@@ -129,22 +129,7 @@ const LoginPage: React.FC = () => {
               </div>
             )}
 
-            {/* Demo Credentials */}
-            <div style={{
-              backgroundColor: 'var(--primary-50)',
-              color: 'var(--primary-700)',
-              padding: 'var(--spacing-3)',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: 'var(--spacing-6)',
-              fontSize: 'var(--font-size-sm)',
-              border: '1px solid var(--primary-200)'
-            }}>
-              <div style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-2)' }}>
-                Demo Credentials:
-              </div>
-              <div>Email: dr.michael.brown@hospital.com</div>
-              <div>Password: healthcare123</div>
-            </div>
+
 
             {/* Login Form */}
             <form onSubmit={handleSubmit}>

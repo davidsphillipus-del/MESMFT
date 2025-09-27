@@ -11,7 +11,7 @@ import { Input } from '../components/ui/Input'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
-import { api, mockData } from '../services/mockApi'
+import { patientAPI, appointmentAPI } from '../services/api'
 import InteractiveDashboard from '../components/dashboard/InteractiveDashboard'
 import { 
   Users, 
@@ -45,38 +45,23 @@ const DoctorPortal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Use real API endpoints
-        const [episodesResponse, patientsResponse, appointmentsResponse] = await Promise.all([
-          fetch('http://localhost:5001/api/v1/episodes', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          }),
-          fetch('http://localhost:5001/api/v1/patients', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          }),
-          fetch('http://localhost:5001/api/v1/appointments', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          })
-        ])
-
-        const episodesData = await episodesResponse.json()
-        const patientsData = await patientsResponse.json()
-        const appointmentsData = await appointmentsResponse.json()
-
-        setEpisodes(episodesData.data || [])
-        setPatients(patientsData.data || [])
-        setAppointments(appointmentsData.data || [])
-      } catch (error) {
-        console.error('Failed to load doctor data:', error)
-        // Fallback to mock data if API fails
-        setEpisodes(mockData.episodes || [])
-        setPatients(mockData.patients || [])
-        setAppointments(mockData.appointments || [])
-      } finally {
-        setIsLoading(false)
+      const loadData = async () => {
+        try {
+          const [episodesResponse, patientsResponse, appointmentsResponse] = await Promise.all([
+            patientAPI.getMedicalRecords(user?.id),
+            patientAPI.getPatients(),
+            appointmentAPI.getAppointments({ doctorId: user?.id })
+          ])
+          setEpisodes(episodesResponse.data || [])
+          setPatients(patientsResponse.data || [])
+          setAppointments(appointmentsResponse.data || [])
+        } catch (error) {
+          console.error('Failed to load doctor data:', error)
+          // Optionally show error UI or message here
+        } finally {
+          setIsLoading(false)
+        }
       }
-    }
 
     if (user) {
       loadData()

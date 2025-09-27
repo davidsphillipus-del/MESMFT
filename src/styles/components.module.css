@@ -152,6 +152,25 @@
   box-shadow: 0 0 0 3px rgb(239 68 68 / 0.1);
 }
 
+/* Form Styles */
+.formGroup {
+  margin-bottom: var(--spacing-4);
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.formError {
+  margin-top: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  color: var(--red-600);
+}
+
 /* Select Styles */
 .select {
   width: 100%;

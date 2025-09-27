@@ -10,7 +10,7 @@ import { Input } from '../components/ui/Input'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
-import { api, mockData } from '../services/mockApi'
+import { prescriptionAPI, medicationAPI } from '../services/api'
 import { 
   Pill, 
   Package, 
@@ -37,18 +37,26 @@ const PharmacistPortal: React.FC = () => {
   const { user } = useAuth()
   const [activeView, setActiveView] = useState('dashboard')
   const [isLoading, setIsLoading] = useState(true)
+  const [prescriptions, setPrescriptions] = useState<any[]>([])
+  const [inventory, setInventory] = useState<any[]>([])
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Simulate loading pharmacy data
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      } catch (error) {
-        console.error('Failed to load pharmacist data:', error)
-      } finally {
-        setIsLoading(false)
+      const loadData = async () => {
+        try {
+          // Use real API endpoints
+          const [prescriptionsResponse, inventoryResponse] = await Promise.all([
+            prescriptionAPI.getPrescriptions(),
+            medicationAPI.getMedications()
+          ])
+          setPrescriptions(prescriptionsResponse.data || [])
+          setInventory(inventoryResponse.data || [])
+        } catch (error) {
+          console.error('Failed to load pharmacist data:', error)
+          // Optionally show error UI or message here
+        } finally {
+          setIsLoading(false)
+        }
       }
-    }
 
     if (user) {
       loadData()
@@ -137,7 +145,7 @@ const PharmacistPortal: React.FC = () => {
           </Button>
         }
       >
-        {mockPrescriptions.filter(p => p.status === 'pending').map((prescription) => (
+        {prescriptions.filter(p => p.status === 'pending').map((prescription) => (
           <Card key={prescription.id} style={{ marginBottom: 'var(--spacing-3)' }}>
             <CardContent style={{ padding: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
@@ -183,7 +191,7 @@ const PharmacistPortal: React.FC = () => {
           </Button>
         }
       >
-        {mockInventory.filter(item => item.status === 'low' || item.status === 'critical').map((item) => (
+        {inventory.filter(item => item.stock < item.minStock).map((item) => (
           <Card key={item.id} style={{ marginBottom: 'var(--spacing-3)' }}>
             <CardContent style={{ padding: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
@@ -223,7 +231,7 @@ const PharmacistPortal: React.FC = () => {
           </Button>
         }
       >
-        {mockPrescriptions.filter(p => p.status === 'ready').map((prescription) => (
+        {prescriptions.filter(p => p.status === 'ready').map((prescription) => (
           <Card key={prescription.id} style={{ marginBottom: 'var(--spacing-3)' }}>
             <CardContent style={{ padding: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
@@ -266,7 +274,7 @@ const PharmacistPortal: React.FC = () => {
         </div>
       }
     >
-      {mockPrescriptions.map((prescription) => (
+      {prescriptions.map((prescription) => (
         <Card key={prescription.id} style={{ marginBottom: 'var(--spacing-4)' }}>
           <CardContent style={{ padding: 'var(--spacing-6)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
@@ -347,7 +355,7 @@ const PharmacistPortal: React.FC = () => {
         </div>
       }
     >
-      {mockInventory.map((item) => (
+      {inventory.map((item) => (
         <Card key={item.id} style={{ marginBottom: 'var(--spacing-4)' }}>
           <CardContent style={{ padding: 'var(--spacing-6)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>

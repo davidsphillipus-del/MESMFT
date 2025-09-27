@@ -10,7 +10,7 @@ import { Input } from '../components/ui/Input'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
-import { api, mockData } from '../services/mockApi'
+import { patientAPI, appointmentAPI } from '../services/api'
 import {
   UserCheck,
   Calendar,
@@ -39,35 +39,43 @@ const ReceptionistPortal: React.FC = () => {
   const [activeView, setActiveView] = useState('dashboard')
   const [appointments, setAppointments] = useState<any[]>([])
   const [patients, setPatients] = useState<any[]>([])
+  const [patientQueue, setPatientQueue] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Use real API endpoints
-        const [appointmentsResponse, patientsResponse] = await Promise.all([
-          fetch('http://localhost:5001/api/v1/appointments', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          }),
-          fetch('http://localhost:5001/api/v1/patients', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          })
-        ])
+      const loadData = async () => {
+        try {
+          const [appointmentsResponse, patientsResponse] = await Promise.all([
+            appointmentAPI.getAppointments(),
+            patientAPI.getPatients()
+          ])
+          setAppointments(appointmentsResponse.data || [])
+          setPatients(patientsResponse.data || [])
 
-        const appointmentsData = await appointmentsResponse.json()
-        const patientsData = await patientsResponse.json()
+          // Create patient queue from today's appointments
+          const today = new Date().toISOString().split('T')[0]
+          const todayAppointments = (appointmentsResponse.data || []).filter(
+            (apt: any) => apt.date === today
+          )
 
-        setAppointments(appointmentsData.data || [])
-        setPatients(patientsData.data || [])
-      } catch (error) {
-        console.error('Failed to load receptionist data:', error)
-        // Fallback to mock data if API fails
-        setAppointments(mockData.appointments || [])
-        setPatients(mockData.patients || [])
-      } finally {
-        setIsLoading(false)
+          // Transform appointments into queue format
+          const queue = todayAppointments.map((apt: any, index: number) => ({
+            id: apt.id,
+            patientName: `${apt.patientFirstName} ${apt.patientLastName}`,
+            appointmentTime: apt.time,
+            status: apt.status === 'scheduled' ? 'waiting' : apt.status,
+            waitTime: `${index * 5} min`,
+            priority: 'normal'
+          }))
+
+          setPatientQueue(queue)
+        } catch (error) {
+          console.error('Failed to load receptionist data:', error)
+          // Optionally show error UI or message here
+        } finally {
+          setIsLoading(false)
+        }
       }
-    }
 
     if (user) {
       loadData()
@@ -162,7 +170,7 @@ const ReceptionistPortal: React.FC = () => {
           </Button>
         }
       >
-        {mockQueue.slice(0, 4).map((patient) => (
+        {patientQueue.slice(0, 4).map((patient) => (
           <Card key={patient.id} style={{ marginBottom: 'var(--spacing-3)' }}>
             <CardContent style={{ padding: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
@@ -342,7 +350,7 @@ const ReceptionistPortal: React.FC = () => {
         </Button>
       }
     >
-      {mockQueue.map((patient) => (
+      {patientQueue.map((patient) => (
         <Card key={patient.id} style={{ marginBottom: 'var(--spacing-4)' }}>
           <CardContent style={{ padding: 'var(--spacing-6)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
@@ -456,7 +464,7 @@ const ReceptionistPortal: React.FC = () => {
             </div>
           }
         >
-          {mockMessages.map((message) => (
+          {[].map((message) => (
             <Card key={message.id} style={{
               marginBottom: 'var(--spacing-4)',
               backgroundColor: message.status === 'unread' ? 'var(--blue-50)' : 'white',

@@ -10,7 +10,7 @@ import { Input } from '../components/ui/Input'
 import { Card, CardContent } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
-import { api, mockData } from '../services/mockApi'
+import { patientAPI, episodeAPI, appointmentAPI } from '../services/api'
 import { 
   Heart, 
   Activity, 
@@ -38,35 +38,46 @@ const NursePortal: React.FC = () => {
   const [activeView, setActiveView] = useState('dashboard')
   const [episodes, setEpisodes] = useState<any[]>([])
   const [patients, setPatients] = useState<any[]>([])
+  const [vitalSigns, setVitalSigns] = useState<any[]>([])
+  const [appointments, setAppointments] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Use real API endpoints
-        const [episodesResponse, patientsResponse] = await Promise.all([
-          fetch('http://localhost:5001/api/v1/episodes', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          }),
-          fetch('http://localhost:5001/api/v1/patients', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
-          })
-        ])
+      const loadData = async () => {
+        try {
+          // Use real API endpoints via service
+          const [episodesResponse, patientsResponse, appointmentsResponse] = await Promise.all([
+            episodeAPI.getEpisodes(),
+            patientAPI.getPatients(),
+            appointmentAPI.getAppointments()
+          ])
+          setEpisodes(episodesResponse.data || [])
+          setPatients(patientsResponse.data || [])
+          setAppointments(appointmentsResponse.data || [])
 
-        const episodesData = await episodesResponse.json()
-        const patientsData = await patientsResponse.json()
-
-        setEpisodes(episodesData.data || [])
-        setPatients(patientsData.data || [])
-      } catch (error) {
-        console.error('Failed to load nurse data:', error)
-        // Fallback to mock data if API fails
-        setEpisodes(mockData.episodes || [])
-        setPatients(mockData.patients || [])
-      } finally {
-        setIsLoading(false)
+          // Load vital signs for recent patients
+          if (patientsResponse.data && patientsResponse.data.length > 0) {
+            const recentPatients = patientsResponse.data.slice(0, 5)
+            const vitalPromises = recentPatients.map(patient =>
+              patientAPI.getVitalSigns(patient.id).catch(() => ({ data: [] }))
+            )
+            const vitalResponses = await Promise.all(vitalPromises)
+            const allVitals = vitalResponses.flatMap((response, index) =>
+              (response.data || []).map((vital: any) => ({
+                ...vital,
+                patientName: `${recentPatients[index].firstName} ${recentPatients[index].lastName}`,
+                patientId: recentPatients[index].id
+              }))
+            )
+            setVitalSigns(allVitals)
+          }
+        } catch (error) {
+          console.error('Failed to load nurse data:', error)
+          // Optionally show error UI or message here
+        } finally {
+          setIsLoading(false)
+        }
       }
-    }
 
     if (user) {
       loadData()
@@ -90,17 +101,29 @@ const NursePortal: React.FC = () => {
     { label: 'Protocols Followed', value: '15', color: 'var(--purple-600)' }
   ]
 
-  const mockVitals = [
-    { patientName: 'Nangula K.', temp: '38.9°C', bp: '120/80', pulse: '98', time: '08:30', status: 'abnormal' },
-    { patientName: 'Amos N.', temp: '37.2°C', bp: '110/70', pulse: '72', time: '09:15', status: 'normal' },
-    { patientName: 'Helena M.', temp: '36.8°C', bp: '125/85', pulse: '88', time: '10:00', status: 'normal' }
-  ]
+  // Use real vital signs data from API
+  const recentVitals = vitalSigns.slice(0, 3).map(vital => ({
+    patientName: vital.patientName,
+    temp: vital.temperature ? `${vital.temperature}°C` : 'N/A',
+    bp: vital.bloodPressureSystolic && vital.bloodPressureDiastolic
+      ? `${vital.bloodPressureSystolic}/${vital.bloodPressureDiastolic}`
+      : 'N/A',
+    pulse: vital.heartRate ? `${vital.heartRate}` : 'N/A',
+    time: vital.recordedAt ? new Date(vital.recordedAt).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : 'N/A',
+    status: vital.temperature && vital.temperature > 38 ? 'abnormal' : 'normal'
+  }))
 
-  const mockProtocols = [
+  // Clinical protocols - these would typically come from a protocols API
+  const clinicalProtocols = [
     { id: 1, name: 'Malaria Assessment Protocol', category: 'Infectious Disease', lastUsed: '2025-09-20', status: 'active' },
     { id: 2, name: 'Typhoid Fever Management', category: 'Infectious Disease', lastUsed: '2025-09-18', status: 'active' },
     { id: 3, name: 'Vital Signs Monitoring', category: 'General Care', lastUsed: '2025-09-25', status: 'active' },
-    { id: 4, name: 'Patient Education Guidelines', category: 'Education', lastUsed: '2025-09-22', status: 'active' }
+    { id: 4, name: 'Patient Education Guidelines', category: 'Education', lastUsed: '2025-09-22', status: 'active' },
+    { id: 5, name: 'Medication Administration', category: 'General Care', lastUsed: '2025-09-24', status: 'active' },
+    { id: 6, name: 'Infection Control Protocol', category: 'Safety', lastUsed: '2025-09-23', status: 'active' }
   ]
 
   const renderDashboardView = () => (
@@ -118,7 +141,7 @@ const NursePortal: React.FC = () => {
           </Button>
         }
       >
-        {mockVitals.map((vital, index) => (
+        {recentVitals.map((vital, index) => (
           <Card key={index} style={{ marginBottom: 'var(--spacing-3)' }}>
             <CardContent style={{ padding: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
@@ -197,7 +220,7 @@ const NursePortal: React.FC = () => {
           </Button>
         }
       >
-        {mockProtocols.slice(0, 3).map((protocol) => (
+        {clinicalProtocols.slice(0, 3).map((protocol) => (
           <Card key={protocol.id} style={{ marginBottom: 'var(--spacing-3)' }}>
             <CardContent style={{ padding: 'var(--spacing-4)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-2)' }}>
@@ -294,7 +317,7 @@ const NursePortal: React.FC = () => {
         </Button>
       }
     >
-      {mockVitals.map((vital, index) => (
+      {vitalSigns.map((vital, index) => (
         <Card key={index} style={{ marginBottom: 'var(--spacing-4)' }}>
           <CardContent style={{ padding: 'var(--spacing-6)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
@@ -366,7 +389,7 @@ const NursePortal: React.FC = () => {
         </div>
       }
     >
-      {mockProtocols.map((protocol) => (
+      {clinicalProtocols.map((protocol) => (
         <Card key={protocol.id} style={{ marginBottom: 'var(--spacing-4)' }}>
           <CardContent style={{ padding: 'var(--spacing-6)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
@@ -405,44 +428,7 @@ const NursePortal: React.FC = () => {
   )
 
   const renderEpisodesView = () => {
-    const mockEpisodes = [
-      {
-        id: 'E-001',
-        patientName: 'Nangula K.',
-        patientId: 'P-2025-0001',
-        diagnosis: 'Malaria Treatment',
-        status: 'Active',
-        priority: 'High',
-        startDate: '2025-09-20',
-        assignedDoctor: 'Dr. Asha Mwangi',
-        nursingNotes: 'Patient responding well to treatment. Monitor vitals q4h.',
-        nextAction: 'Administer medication at 14:00'
-      },
-      {
-        id: 'E-002',
-        patientName: 'Amos N.',
-        patientId: 'P-2025-0045',
-        diagnosis: 'Typhoid Fever',
-        status: 'Monitoring',
-        priority: 'Medium',
-        startDate: '2025-09-18',
-        assignedDoctor: 'Dr. Johannes Hamutenya',
-        nursingNotes: 'Temperature stable. Patient eating well.',
-        nextAction: 'Vital signs check at 16:00'
-      },
-      {
-        id: 'E-003',
-        patientName: 'Helena M.',
-        patientId: 'P-2025-0089',
-        diagnosis: 'Post-operative Care',
-        status: 'Recovery',
-        priority: 'Low',
-        startDate: '2025-09-15',
-        assignedDoctor: 'Dr. Asha Mwangi',
-        nursingNotes: 'Wound healing well. Patient mobile.',
-        nextAction: 'Dressing change tomorrow'
-      }
-    ]
+    // Use real episodes data from API
 
     return (
       <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
@@ -462,7 +448,7 @@ const NursePortal: React.FC = () => {
             </div>
           }
         >
-          {mockEpisodes.map((episode) => (
+          {episodes.map((episode) => (
             <Card key={episode.id} style={{ marginBottom: 'var(--spacing-4)' }}>
               <CardContent style={{ padding: 'var(--spacing-6)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>

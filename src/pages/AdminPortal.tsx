@@ -2,21 +2,25 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import Header from '../components/layout/Header'
 import Footer from '../components/layout/Footer'
-import { Card } from '../components/ui/Card'
+import { Card, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
-import { 
-  Users, 
-  Activity, 
-  Settings, 
-  BarChart3, 
-  Shield, 
+import { SectionCard } from '../components/layout/SectionCard'
+import { StatsGrid } from '../components/layout/StatsGrid'
+import {
+  Users,
+  Activity,
+  Settings,
+  BarChart3,
+  Shield,
   Database,
   AlertTriangle,
   CheckCircle,
   Clock,
   TrendingUp
 } from 'lucide-react'
+import styles from '../styles/layout.module.css'
+import componentStyles from '../styles/components.module.css'
 
 interface SystemStats {
   totalUsers: number
@@ -66,225 +70,221 @@ const AdminPortal: React.FC = () => {
   }, [])
 
   const renderDashboard = () => (
-    <div className="space-y-6">
+    <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
       {/* System Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
-            </div>
-            <Users className="h-8 w-8 text-blue-600" />
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
-            </div>
-            <Activity className="h-8 w-8 text-green-600" />
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Patients</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalPatients}</p>
-            </div>
-            <Users className="h-8 w-8 text-purple-600" />
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">System Health</p>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-green-600">Healthy</span>
-              </div>
-            </div>
-            <Shield className="h-8 w-8 text-green-600" />
-          </div>
-        </Card>
-      </div>
+      <StatsGrid
+        stats={[
+          { label: 'Total Users', value: stats.totalUsers.toString(), color: 'var(--primary-600)' },
+          { label: 'Active Users', value: stats.activeUsers.toString(), color: 'var(--secondary-600)' },
+          { label: 'Total Patients', value: stats.totalPatients.toString(), color: 'var(--blue-600)' },
+          { label: 'Total Appointments', value: stats.totalAppointments.toString(), color: 'var(--purple-600)' }
+        ]}
+      />
 
       {/* Recent Activity */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent System Activity</h3>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <span className="text-sm text-gray-600">New patient registered: Jane Smith</span>
-            <span className="text-xs text-gray-400">2 hours ago</span>
+      <SectionCard
+        title="Recent System Activity"
+        subtitle="Latest system events and user activities"
+        icon={<Activity />}
+      >
+        <div style={{ display: 'grid', gap: 'var(--spacing-4)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
+            <CheckCircle style={{ width: '20px', height: '20px', color: 'var(--secondary-600)' }} />
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>New patient registered: Jane Smith</span>
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>2 hours ago</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <Clock className="h-5 w-5 text-blue-600" />
-            <span className="text-sm text-gray-600">Appointment scheduled by Dr. Michael Smith</span>
-            <span className="text-xs text-gray-400">4 hours ago</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
+            <Clock style={{ width: '20px', height: '20px', color: 'var(--primary-600)' }} />
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Appointment scheduled by Dr. Michael Smith</span>
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>4 hours ago</span>
           </div>
-          <div className="flex items-center space-x-3">
-            <TrendingUp className="h-5 w-5 text-purple-600" />
-            <span className="text-sm text-gray-600">System backup completed successfully</span>
-            <span className="text-xs text-gray-400">6 hours ago</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
+            <TrendingUp style={{ width: '20px', height: '20px', color: 'var(--purple-600)' }} />
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>System backup completed successfully</span>
+            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-tertiary)', marginLeft: 'auto' }}>6 hours ago</span>
           </div>
         </div>
-      </Card>
+      </SectionCard>
     </div>
   )
 
   const renderUserManagement = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">User Management</h3>
-        <Button>Add New User</Button>
-      </div>
-
-      <Card className="p-6">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+    <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
+      <SectionCard
+        title="User Management"
+        subtitle="Manage system users and their permissions"
+        icon={<Users />}
+        actions={
+          <Button variant="primary">Add New User</Button>
+        }
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead style={{ backgroundColor: 'var(--bg-secondary)' }}>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th style={{ padding: 'var(--spacing-3) var(--spacing-6)', textAlign: 'left', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>User</th>
+                <th style={{ padding: 'var(--spacing-3) var(--spacing-6)', textAlign: 'left', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Role</th>
+                <th style={{ padding: 'var(--spacing-3) var(--spacing-6)', textAlign: 'left', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+                <th style={{ padding: 'var(--spacing-3) var(--spacing-6)', textAlign: 'left', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Last Login</th>
+                <th style={{ padding: 'var(--spacing-3) var(--spacing-6)', textAlign: 'left', fontSize: 'var(--font-size-xs)', fontWeight: 'var(--font-weight-medium)', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody style={{ backgroundColor: 'var(--bg-primary)' }}>
               {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={user.id} style={{ borderTop: '1px solid var(--border-primary)' }}>
+                  <td style={{ padding: 'var(--spacing-4) var(--spacing-6)', whiteSpace: 'nowrap' }}>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{user.firstName} {user.lastName}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
+                      <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--text-primary)' }}>{user.firstName} {user.lastName}</div>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>{user.email}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td style={{ padding: 'var(--spacing-4) var(--spacing-6)', whiteSpace: 'nowrap' }}>
                     <Badge variant={user.role === 'ADMIN' ? 'danger' : user.role === 'DOCTOR' ? 'success' : 'secondary'}>
                       {user.role}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td style={{ padding: 'var(--spacing-4) var(--spacing-6)', whiteSpace: 'nowrap' }}>
                     <Badge variant={user.isActive ? 'success' : 'secondary'}>
                       {user.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td style={{ padding: 'var(--spacing-4) var(--spacing-6)', whiteSpace: 'nowrap', fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
                     {user.lastLogin || 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Button variant="outline" size="sm" className="mr-2">Edit</Button>
-                    <Button variant="outline" size="sm">
-                      {user.isActive ? 'Deactivate' : 'Activate'}
-                    </Button>
+                  <td style={{ padding: 'var(--spacing-4) var(--spacing-6)', whiteSpace: 'nowrap', fontSize: 'var(--font-size-sm)', fontWeight: 'var(--font-weight-medium)' }}>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-2)' }}>
+                      <Button variant="outline" size="sm">Edit</Button>
+                      <Button variant="outline" size="sm">
+                        {user.isActive ? 'Deactivate' : 'Activate'}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Card>
+      </SectionCard>
     </div>
   )
 
   const renderSystemSettings = () => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900">System Settings</h3>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h4 className="text-md font-semibold text-gray-900 mb-4">Security Settings</h4>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Two-Factor Authentication</span>
+    <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 'var(--spacing-6)' }}>
+        <SectionCard
+          title="Security Settings"
+          subtitle="System security configuration"
+          icon={<Shield />}
+        >
+          <div style={{ display: 'grid', gap: 'var(--spacing-4)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Two-Factor Authentication</span>
               <Badge variant="success">Enabled</Badge>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Password Policy</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Password Policy</span>
               <Badge variant="success">Strong</Badge>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Session Timeout</span>
-              <span className="text-sm text-gray-900">30 minutes</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Session Timeout</span>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>30 minutes</span>
             </div>
           </div>
-        </Card>
+        </SectionCard>
 
-        <Card className="p-6">
-          <h4 className="text-md font-semibold text-gray-900 mb-4">System Maintenance</h4>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Last Backup</span>
-              <span className="text-sm text-gray-900">2 hours ago</span>
+        <SectionCard
+          title="System Maintenance"
+          subtitle="System health and maintenance status"
+          icon={<Database />}
+        >
+          <div style={{ display: 'grid', gap: 'var(--spacing-4)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Last Backup</span>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>2 hours ago</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Database Size</span>
-              <span className="text-sm text-gray-900">2.4 GB</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>Database Size</span>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>2.4 GB</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">System Uptime</span>
-              <span className="text-sm text-gray-900">{stats.uptime}</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>System Uptime</span>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>{stats.uptime}</span>
             </div>
           </div>
-        </Card>
+        </SectionCard>
       </div>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={styles.pageContainer}>
       <Header
         title="Admin Portal"
         subtitle="System Administration & Management"
-        userInfo={user.name}
+        userInfo={user?.firstName || 'Admin'}
         userRole="admin"
         showBackButton={false}
         showHomeButton={false}
       />
-      
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Portal</h1>
-          <p className="mt-2 text-gray-600">
-            Welcome back, {user?.firstName}! Manage your healthcare system from here.
-          </p>
-        </div>
 
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-              { id: 'users', label: 'User Management', icon: Users },
-              { id: 'settings', label: 'System Settings', icon: Settings },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-md ${
-                  activeTab === tab.id
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
-        </div>
+      <main className={styles.mainContent}>
+        <div className={componentStyles.container}>
+          {/* Welcome Section */}
+          <div style={{ marginBottom: 'var(--spacing-8)' }}>
+            <h1 style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)', color: 'var(--text-primary)' }}>Admin Portal</h1>
+            <p style={{ marginTop: 'var(--spacing-2)', color: 'var(--text-secondary)' }}>
+              Welcome back, {user?.firstName}! Manage your healthcare system from here.
+            </p>
+          </div>
 
-        {/* Tab Content */}
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'users' && renderUserManagement()}
-        {activeTab === 'settings' && renderSystemSettings()}
+          {/* Navigation Tabs */}
+          <div style={{ marginBottom: 'var(--spacing-8)' }}>
+            <nav style={{ display: 'flex', gap: 'var(--spacing-8)' }}>
+              {[
+                { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+                { id: 'users', label: 'User Management', icon: Users },
+                { id: 'settings', label: 'System Settings', icon: Settings },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--spacing-2)',
+                    padding: 'var(--spacing-2) var(--spacing-3)',
+                    fontSize: 'var(--font-size-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    borderRadius: 'var(--radius-md)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    backgroundColor: activeTab === tab.id ? 'var(--primary-100)' : 'transparent',
+                    color: activeTab === tab.id ? 'var(--primary-700)' : 'var(--text-secondary)',
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeTab !== tab.id) {
+                      e.currentTarget.style.color = 'var(--text-primary)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeTab !== tab.id) {
+                      e.currentTarget.style.color = 'var(--text-secondary)'
+                    }
+                  }}
+                >
+                  <tab.icon style={{ width: '16px', height: '16px' }} />
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'dashboard' && renderDashboard()}
+          {activeTab === 'users' && renderUserManagement()}
+          {activeTab === 'settings' && renderSystemSettings()}
+        </div>
       </main>
 
       <Footer />
