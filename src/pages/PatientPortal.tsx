@@ -13,6 +13,7 @@ import { Badge } from '../components/ui/Badge'
 import { useAuth } from '../contexts/AuthContext'
 import { api, mockData } from '../services/mockApi'
 import InteractiveDashboard from '../components/dashboard/InteractiveDashboard'
+import DoctorSearch from '../components/search/DoctorSearch'
 import { 
   Calendar, 
   FileText, 
@@ -32,6 +33,7 @@ const NAVIGATION_ITEMS = [
   { id: 'interactive', label: 'Quick Actions', icon: <Activity /> },
   { id: 'episodes', label: 'Medical Episodes', icon: <FileText /> },
   { id: 'appointments', label: 'Appointments', icon: <Calendar /> },
+  { id: 'doctors', label: 'Find Doctors', icon: <Search /> },
   { id: 'records', label: 'Medical Records', icon: <Heart /> },
   { id: 'bots', label: 'Health Tools', icon: <Brain /> }
 ]
@@ -322,49 +324,81 @@ const PatientPortal: React.FC = () => {
     </SectionCard>
   )
 
+  const renderDoctorSearchView = () => {
+    const handleSelectDoctor = (doctor: any) => {
+      // You can add logic here to book appointment or view doctor profile
+      console.log('Selected doctor:', doctor)
+      // For now, we'll just switch to appointments view
+      setActiveView('appointments')
+    }
+
+    return (
+      <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
+        <SectionCard
+          title="Find Doctors"
+          subtitle="Search and connect with healthcare professionals"
+          icon={<Search />}
+        >
+          <DoctorSearch
+            onSelectDoctor={handleSelectDoctor}
+            showBookingButton={true}
+          />
+        </SectionCard>
+      </div>
+    )
+  }
+
   const renderMedicalRecordsView = () => {
-    const mockMedicalRecords = [
-      {
-        id: 'MR-001',
-        type: 'Lab Results',
-        title: 'Blood Culture - Malaria Test',
-        date: '2025-09-20',
-        doctor: 'Dr. Asha Mwangi',
-        status: 'completed',
-        results: 'Negative for malaria parasites',
-        category: 'laboratory'
-      },
-      {
-        id: 'MR-002',
-        type: 'Prescription',
-        title: 'Antimalarial Treatment',
-        date: '2025-09-18',
-        doctor: 'Dr. Asha Mwangi',
-        status: 'active',
-        results: 'Artemether-Lumefantrine prescribed',
-        category: 'medication'
-      },
-      {
-        id: 'MR-003',
-        type: 'Vital Signs',
-        title: 'Routine Check-up',
-        date: '2025-09-15',
-        doctor: 'Nurse Tamara',
-        status: 'completed',
-        results: 'BP: 120/80, Temp: 36.5°C, HR: 72 bpm',
-        category: 'vitals'
-      },
-      {
-        id: 'MR-004',
-        type: 'Imaging',
-        title: 'Chest X-Ray',
-        date: '2025-09-10',
-        doctor: 'Dr. Johannes Hamutenya',
-        status: 'completed',
-        results: 'Clear lungs, no abnormalities detected',
-        category: 'imaging'
+    const [medicalRecords, setMedicalRecords] = useState<any[]>([])
+    const [isLoadingRecords, setIsLoadingRecords] = useState(true)
+
+    useEffect(() => {
+      const loadMedicalRecords = async () => {
+        try {
+          const response = await fetch(`http://localhost:5001/api/v1/patients/${user?.id}/medical-records`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+          })
+          const data = await response.json()
+
+          if (data.success) {
+            setMedicalRecords(data.data)
+          }
+        } catch (error) {
+          console.error('Failed to load medical records:', error)
+        } finally {
+          setIsLoadingRecords(false)
+        }
       }
-    ]
+
+      if (user?.id) {
+        loadMedicalRecords()
+      }
+    }, [user?.id])
+
+    const handleDownloadRecord = async (recordId: number) => {
+      try {
+        const response = await fetch(`http://localhost:5001/api/v1/medical-records/${recordId}/download`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+        })
+
+        if (response.ok) {
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `medical_record_${recordId}.txt`
+          document.body.appendChild(a)
+          a.click()
+          window.URL.revokeObjectURL(url)
+          document.body.removeChild(a)
+        } else {
+          alert('Failed to download medical record')
+        }
+      } catch (error) {
+        console.error('Failed to download record:', error)
+        alert('Failed to download medical record')
+      }
+    }
 
     return (
       <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
@@ -384,53 +418,79 @@ const PatientPortal: React.FC = () => {
             </div>
           }
         >
-          {mockMedicalRecords.map((record) => (
-            <Card key={record.id} style={{ marginBottom: 'var(--spacing-4)' }}>
-              <CardContent style={{ padding: 'var(--spacing-6)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
-                  <div>
-                    <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)' }}>
-                      {record.title}
-                    </h3>
-                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                      {record.type} • {new Date(record.date).toLocaleDateString()} • {record.doctor}
+          {isLoadingRecords ? (
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-8)' }}>
+              Loading medical records...
+            </div>
+          ) : medicalRecords.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--text-secondary)' }}>
+              No medical records found. Your records will appear here once they are created by your healthcare providers.
+            </div>
+          ) : (
+            medicalRecords.map((record) => (
+              <Card key={record.id} style={{ marginBottom: 'var(--spacing-4)' }}>
+                <CardContent style={{ padding: 'var(--spacing-6)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
+                    <div>
+                      <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)' }}>
+                        Medical Record #{record.id}
+                      </h3>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                        {new Date(record.createdAt).toLocaleDateString()} • Dr. {record.doctorFirstName} {record.doctorLastName}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-2)', alignItems: 'center' }}>
+                      <Badge variant="info">
+                        Medical Record
+                      </Badge>
+                      <Badge variant="success">
+                        Complete
+                      </Badge>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-2)', alignItems: 'center' }}>
-                    <Badge variant={
-                      record.category === 'laboratory' ? 'info' :
-                      record.category === 'medication' ? 'warning' :
-                      record.category === 'vitals' ? 'success' : 'default'
-                    }>
-                      {record.type}
-                    </Badge>
-                    <Badge variant={record.status === 'completed' ? 'success' : 'warning'}>
-                      {record.status}
-                    </Badge>
-                  </div>
-                </div>
 
-                <div style={{ marginBottom: 'var(--spacing-4)' }}>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>
-                    <strong>Results:</strong> {record.results}
+                  <div style={{ marginBottom: 'var(--spacing-4)' }}>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', marginBottom: 'var(--spacing-2)' }}>
+                      <strong>Diagnosis:</strong> {record.diagnosis || 'Not specified'}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', marginBottom: 'var(--spacing-2)' }}>
+                      <strong>Symptoms:</strong> {record.symptoms || 'Not specified'}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', marginBottom: 'var(--spacing-2)' }}>
+                      <strong>Treatment:</strong> {record.treatment || 'Not specified'}
+                    </div>
+                    {record.medications && (
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', marginBottom: 'var(--spacing-2)' }}>
+                        <strong>Medications:</strong> {record.medications}
+                      </div>
+                    )}
+                    {record.notes && (
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>
+                        <strong>Notes:</strong> {record.notes}
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
-                  <Button variant="outline" size="sm">
-                    <Download style={{ width: '16px', height: '16px' }} />
-                    Download
-                  </Button>
-                  <Button variant="primary" size="sm">
-                    View Details
-                  </Button>
-                  <Button variant="success" size="sm">
-                    Share with Doctor
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadRecord(record.id)}
+                    >
+                      <Download style={{ width: '16px', height: '16px' }} />
+                      Download
+                    </Button>
+                    <Button variant="primary" size="sm">
+                      View Details
+                    </Button>
+                    <Button variant="success" size="sm">
+                      Share with Doctor
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </SectionCard>
       </div>
     )
@@ -585,6 +645,8 @@ const PatientPortal: React.FC = () => {
         return renderEpisodesView()
       case 'appointments':
         return renderAppointmentsView()
+      case 'doctors':
+        return renderDoctorSearchView()
       case 'records':
         return renderMedicalRecordsView()
       case 'bots':

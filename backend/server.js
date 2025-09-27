@@ -361,6 +361,81 @@ app.post('/api/v1/episodes', authenticateToken, (req, res) => {
 })
 
 // ============================================================================
+// DOCTORS ENDPOINTS
+// ============================================================================
+
+// Get all doctors
+app.get('/api/v1/doctors', authenticateToken, (req, res) => {
+  const { specialization, available } = req.query
+
+  let query = `SELECT id, firstName, lastName, email, phone
+               FROM users
+               WHERE role = 'DOCTOR'`
+  const params = []
+
+  query += ' ORDER BY firstName, lastName'
+
+  db.all(query, params, (err, doctors) => {
+    if (err) {
+      console.error('Database error:', err)
+      return res.status(500).json({ message: 'Database error', success: false })
+    }
+
+    // Add mock specializations for now
+    const doctorsWithSpecializations = doctors.map(doctor => ({
+      ...doctor,
+      specialization: doctor.firstName.includes('Michael') ? 'Internal Medicine' :
+                     doctor.firstName.includes('Emily') ? 'Infectious Diseases' :
+                     doctor.firstName.includes('Sarah') ? 'Internal Medicine' :
+                     doctor.firstName.includes('James') ? 'Endocrinology' : 'General Medicine',
+      department: 'Medical',
+      licenseNumber: `MD-${doctor.id.toString().padStart(4, '0')}`
+    }))
+
+    res.json({
+      message: 'Doctors retrieved successfully',
+      success: true,
+      data: doctorsWithSpecializations
+    })
+  })
+})
+
+// Get doctor by ID
+app.get('/api/v1/doctors/:id', authenticateToken, (req, res) => {
+  const { id } = req.params
+
+  db.get(`SELECT id, firstName, lastName, email, phone
+          FROM users
+          WHERE id = ? AND role = 'DOCTOR'`, [id], (err, doctor) => {
+    if (err) {
+      console.error('Database error:', err)
+      return res.status(500).json({ message: 'Database error', success: false })
+    }
+
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found', success: false })
+    }
+
+    // Add mock specialization
+    const doctorWithSpecialization = {
+      ...doctor,
+      specialization: doctor.firstName.includes('Michael') ? 'Internal Medicine' :
+                     doctor.firstName.includes('Emily') ? 'Infectious Diseases' :
+                     doctor.firstName.includes('Sarah') ? 'Internal Medicine' :
+                     doctor.firstName.includes('James') ? 'Endocrinology' : 'General Medicine',
+      department: 'Medical',
+      licenseNumber: `MD-${doctor.id.toString().padStart(4, '0')}`
+    }
+
+    res.json({
+      message: 'Doctor retrieved successfully',
+      success: true,
+      data: doctorWithSpecialization
+    })
+  })
+})
+
+// ============================================================================
 // PATIENTS ENDPOINTS
 // ============================================================================
 
@@ -983,6 +1058,64 @@ app.put('/api/v1/episodes/:id', authenticateToken, (req, res) => {
               success: true
             })
           })
+})
+
+// Download medical record as PDF/text
+app.get('/api/v1/medical-records/:id/download', authenticateToken, (req, res) => {
+  const { id } = req.params
+  const { format = 'text' } = req.query
+
+  db.get(`SELECT mr.*,
+                 p.firstName as patientFirstName, p.lastName as patientLastName,
+                 d.firstName as doctorFirstName, d.lastName as doctorLastName
+          FROM medical_records mr
+          LEFT JOIN users p ON mr.patientId = p.id
+          LEFT JOIN users d ON mr.doctorId = d.id
+          WHERE mr.id = ?`, [id], (err, record) => {
+    if (err) {
+      console.error('Database error:', err)
+      return res.status(500).json({ message: 'Database error', success: false })
+    }
+
+    if (!record) {
+      return res.status(404).json({ message: 'Medical record not found', success: false })
+    }
+
+    // Generate downloadable content
+    const content = `
+MEDICAL RECORD
+==============
+
+Patient: ${record.patientFirstName} ${record.patientLastName}
+Doctor: ${record.doctorFirstName} ${record.doctorLastName}
+Date: ${new Date(record.createdAt).toLocaleDateString()}
+
+DIAGNOSIS:
+${record.diagnosis || 'Not specified'}
+
+SYMPTOMS:
+${record.symptoms || 'Not specified'}
+
+TREATMENT:
+${record.treatment || 'Not specified'}
+
+MEDICATIONS:
+${record.medications || 'Not specified'}
+
+NOTES:
+${record.notes || 'No additional notes'}
+
+Generated on: ${new Date().toLocaleString()}
+MESMTF Healthcare System
+    `.trim()
+
+    // Set appropriate headers for download
+    const filename = `medical_record_${record.id}_${new Date().toISOString().split('T')[0]}.txt`
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.setHeader('Content-Type', 'text/plain')
+
+    res.send(content)
+  })
 })
 
 // ============================================================================

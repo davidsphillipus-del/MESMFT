@@ -30,14 +30,13 @@ const AppointmentBooking: React.FC<AppointmentBookingProps> = ({ onSuccess, onCa
 
   const loadDoctors = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/v1/users', {
+      const response = await fetch('http://localhost:5001/api/v1/doctors', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
       })
       const data = await response.json()
-      
+
       if (data.success) {
-        const doctorUsers = data.data.filter((u: any) => u.role === 'DOCTOR')
-        setDoctors(doctorUsers)
+        setDoctors(data.data)
       }
     } catch (error) {
       console.error('Failed to load doctors:', error)

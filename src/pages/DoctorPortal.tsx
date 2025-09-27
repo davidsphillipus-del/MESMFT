@@ -349,38 +349,8 @@ const DoctorPortal: React.FC = () => {
   )
 
   const renderAppointmentsView = () => {
-    const mockAppointments = [
-      {
-        id: 'A-001',
-        patientName: 'Nangula K.',
-        patientId: 'P-2025-0001',
-        datetime: '2025-09-25T10:30',
-        type: 'Follow-up',
-        status: 'Confirmed',
-        duration: '30 minutes',
-        notes: 'Malaria treatment follow-up'
-      },
-      {
-        id: 'A-002',
-        patientName: 'Amos N.',
-        patientId: 'P-2025-0045',
-        datetime: '2025-09-25T14:00',
-        type: 'Consultation',
-        status: 'Pending',
-        duration: '45 minutes',
-        notes: 'New patient consultation'
-      },
-      {
-        id: 'A-003',
-        patientName: 'Helena M.',
-        patientId: 'P-2025-0089',
-        datetime: '2025-09-26T09:00',
-        type: 'Check-up',
-        status: 'Confirmed',
-        duration: '30 minutes',
-        notes: 'Routine health check'
-      }
-    ]
+    // Filter appointments for this doctor
+    const doctorAppointments = appointments.filter(apt => apt.doctorId === user?.id)
 
     return (
       <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
@@ -399,56 +369,64 @@ const DoctorPortal: React.FC = () => {
             </div>
           }
         >
-          {mockAppointments.map((appointment) => (
-            <Card key={appointment.id} style={{ marginBottom: 'var(--spacing-4)' }}>
-              <CardContent style={{ padding: 'var(--spacing-6)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
-                  <div>
-                    <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)' }}>
-                      {appointment.patientName}
-                    </h3>
-                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                      {appointment.type} • {new Date(appointment.datetime).toLocaleString()}
+          {doctorAppointments.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-8)', color: 'var(--text-secondary)' }}>
+              No appointments scheduled. Your appointments will appear here once patients book with you.
+            </div>
+          ) : (
+            doctorAppointments.map((appointment) => (
+              <Card key={appointment.id} style={{ marginBottom: 'var(--spacing-4)' }}>
+                <CardContent style={{ padding: 'var(--spacing-6)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-4)' }}>
+                    <div>
+                      <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)' }}>
+                        {appointment.patientFirstName} {appointment.patientLastName}
+                      </h3>
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                        {new Date(appointment.date + ' ' + appointment.time).toLocaleString()}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--spacing-2)', alignItems: 'center' }}>
+                      <Badge variant={appointment.status === 'scheduled' ? 'success' : 'warning'}>
+                        {appointment.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 'var(--spacing-2)', alignItems: 'center' }}>
-                    <Badge variant={appointment.status === 'Confirmed' ? 'success' : 'warning'}>
-                      {appointment.status}
-                    </Badge>
-                  </div>
-                </div>
 
-                <div style={{ marginBottom: 'var(--spacing-4)' }}>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                    Patient ID: {appointment.patientId}
+                  <div style={{ marginBottom: 'var(--spacing-4)' }}>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                      Patient ID: {appointment.patientId}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                      Date: {appointment.date} at {appointment.time}
+                    </div>
+                    {appointment.notes && (
+                      <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                        Notes: {appointment.notes}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                    Duration: {appointment.duration}
-                  </div>
-                  <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-                    Notes: {appointment.notes}
-                  </div>
-                </div>
 
-                <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
-                  <Button variant="outline" size="sm">
-                    View Patient
-                  </Button>
-                  <Button variant="primary" size="sm">
-                    Start Consultation
-                  </Button>
-                  <Button variant="success" size="sm">
-                    Reschedule
-                  </Button>
-                  {appointment.status === 'Pending' && (
-                    <Button variant="danger" size="sm">
-                      Cancel
+                  <div style={{ display: 'flex', gap: 'var(--spacing-2)', justifyContent: 'flex-end' }}>
+                    <Button variant="outline" size="sm">
+                      View Patient
                     </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <Button variant="primary" size="sm">
+                      Start Consultation
+                    </Button>
+                    <Button variant="success" size="sm">
+                      Reschedule
+                    </Button>
+                    {appointment.status === 'scheduled' && (
+                      <Button variant="danger" size="sm">
+                        Cancel
+                    </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </SectionCard>
       </div>
     )
