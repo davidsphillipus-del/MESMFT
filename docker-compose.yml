@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Frontend service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=http://backend:5001/api/v1
+    depends_on:
+      - backend
+    networks:
+      - mesmtf-network
+    restart: unless-stopped
+
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - DATABASE_PATH=/app/data/healthcare.db
+      - JWT_SECRET=${JWT_SECRET:-mesmtf-healthcare-secret-key-2024-production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CORS_ORIGIN=http://localhost:3000
+    volumes:
+      - backend-data:/app/data
+      - backend-logs:/app/logs
+      - backend-backups:/app/backups
+    networks:
+      - mesmtf-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - mesmtf-network
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+    driver: local
+  backend-logs:
+    driver: local
+  backend-backups:
+    driver: local
+
+networks:
+  mesmtf-network:
+    driver: bridge

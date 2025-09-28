@@ -8,8 +8,15 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc && vite build",
+    "build:prod": "NODE_ENV=production npm run build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist node_modules/.vite",
+    "analyze": "npm run build && npx vite-bundle-analyzer dist/stats.html",
+    "deploy:build": "npm run clean && npm run type-check && npm run lint && npm run build:prod",
+    "serve:prod": "npm run build:prod && npm run preview"
   },
   "dependencies": {
     "axios": "^1.12.2",

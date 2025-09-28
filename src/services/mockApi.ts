@@ -252,7 +252,7 @@ export const api = {
     } as T
   },
 
-  async put<T>(endpoint: string, data: any): Promise<T> {
+  async put<T>(_endpoint: string, data: any): Promise<T> {
     await delay(600)
     
     // Mock successful update
@@ -262,7 +262,7 @@ export const api = {
     } as T
   },
 
-  async delete(endpoint: string): Promise<void> {
+  async delete(_endpoint: string): Promise<void> {
     await delay(400)
     // Mock successful deletion
   }

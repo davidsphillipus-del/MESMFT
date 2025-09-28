@@ -4,23 +4,118 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const sqlite3 = require('sqlite3').verbose()
 const path = require('path')
+const fs = require('fs')
+const helmet = require('helmet')
+const rateLimit = require('express-rate-limit')
+const compression = require('compression')
+const morgan = require('morgan')
 const { GoogleGenerativeAI } = require('@google/generative-ai')
 
-const app = express()
-const PORT = 5001
-const JWT_SECRET = 'mesmtf-healthcare-secret-key-2024'
-const dbPath = path.join(__dirname, 'healthcare.db')
+// Load environment variables
+require('dotenv').config()
 
-// Initialize Gemini AI
-const GEMINI_API_KEY = 'AIzaSyDhUWw8YFTECMA1F83PBbRxjiavlTWW3vk'
+const app = express()
+
+// Environment Configuration
+const NODE_ENV = process.env.NODE_ENV || 'development'
+const PORT = process.env.PORT || 5001
+const HOST = process.env.HOST || 'localhost'
+const JWT_SECRET = process.env.JWT_SECRET || 'mesmtf-healthcare-secret-key-2024'
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
+const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS) || 12
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'healthcare.db')
+
+// AI Configuration
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyDhUWw8YFTECMA1F83PBbRxjiavlTWW3vk'
+const AI_MODEL = process.env.AI_MODEL || 'gemini-1.5-flash-8b'
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
 
-// Middleware
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
+// Logging Configuration
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info'
+const ENABLE_REQUEST_LOGGING = process.env.ENABLE_REQUEST_LOGGING === 'true'
+
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, 'logs')
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true })
+}
+
+// Security and Production Middleware
+if (NODE_ENV === 'production') {
+  app.set('trust proxy', process.env.TRUST_PROXY === 'true')
+
+  // Helmet for security headers
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    crossOriginEmbedderPolicy: false
+  }))
+}
+
+// Compression middleware
+app.use(compression())
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    success: false
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use('/api/', limiter)
+
+// Logging middleware
+if (NODE_ENV === 'production') {
+  app.use(morgan('combined'))
+} else {
+  app.use(morgan('dev'))
+}
+
+// CORS Configuration
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400 // 24 hours
+}
+
+app.use(cors(corsOptions))
+
+// Body parsing middleware with size limits
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf
+  }
 }))
-app.use(express.json())
+app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Request logging middleware
+if (ENABLE_REQUEST_LOGGING) {
+  app.use((req, res, next) => {
+    const timestamp = new Date().toISOString()
+    console.log(`[${timestamp}] ${req.method} ${req.url} - ${req.ip}`)
+    next()
+  })
+}
 
 // Initialize SQLite Database
 const db = new sqlite3.Database(dbPath)
@@ -124,15 +219,57 @@ const authenticateToken = (req, res, next) => {
   })
 }
 
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err)
+
+  if (NODE_ENV === 'production') {
+    res.status(500).json({
+      message: 'Internal server error',
+      success: false
+    })
+  } else {
+    res.status(500).json({
+      message: err.message,
+      success: false,
+      stack: err.stack
+    })
+  }
+})
+
 // Routes
 
-// Health check
+// Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  const healthCheck = {
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    service: 'MESMTF Healthcare Backend API',
-    database: 'Connected'
+    version: '1.0.0',
+    environment: NODE_ENV,
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: 'connected'
+  }
+
+  // Check database connection
+  db.get('SELECT 1', (err) => {
+    if (err) {
+      healthCheck.status = 'ERROR'
+      healthCheck.database = 'disconnected'
+      return res.status(503).json(healthCheck)
+    }
+    res.json(healthCheck)
+  })
+})
+
+// API Status endpoint
+app.get('/api/v1/status', (req, res) => {
+  res.json({
+    message: 'MESMTF Healthcare API is running',
+    version: '1.0.0',
+    environment: NODE_ENV,
+    timestamp: new Date().toISOString(),
+    success: true
   })
 })
 

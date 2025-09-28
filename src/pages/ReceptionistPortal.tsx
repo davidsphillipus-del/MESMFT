@@ -84,7 +84,7 @@ const ReceptionistPortal: React.FC = () => {
 
   if (!user) return null
 
-  const receptionistProfile = user.profile || {}
+  const receptionistProfile = user.profile || {} as any
   const profileDetails = [
     `Department: ${receptionistProfile.department || 'Front Desk'}`,
     `Location: ${receptionistProfile.location || 'Not specified'}`,
@@ -103,12 +103,12 @@ const ReceptionistPortal: React.FC = () => {
     { label: 'Total Patients', value: patients.length, color: 'var(--blue-600)' }
   ]
 
-  const mockQueue = [
-    { id: 1, patientName: 'Nangula K.', appointmentTime: '09:00', status: 'waiting', waitTime: '15 min', priority: 'normal' },
-    { id: 2, patientName: 'Amos N.', appointmentTime: '09:30', status: 'in-progress', waitTime: '5 min', priority: 'urgent' },
-    { id: 3, patientName: 'Helena M.', appointmentTime: '10:00', status: 'waiting', waitTime: '0 min', priority: 'normal' },
-    { id: 4, patientName: 'John D.', appointmentTime: '10:30', status: 'checked-in', waitTime: '0 min', priority: 'normal' }
-  ]
+  // const mockQueue = [
+  //   { id: 1, patientName: 'Nangula K.', appointmentTime: '09:00', status: 'waiting', waitTime: '15 min', priority: 'normal' },
+  //   { id: 2, patientName: 'Amos N.', appointmentTime: '09:30', status: 'in-progress', waitTime: '5 min', priority: 'urgent' },
+  //   { id: 3, patientName: 'Helena M.', appointmentTime: '10:00', status: 'waiting', waitTime: '0 min', priority: 'normal' },
+  //   { id: 4, patientName: 'John D.', appointmentTime: '10:30', status: 'checked-in', waitTime: '0 min', priority: 'normal' }
+  // ]
 
   const renderDashboardView = () => (
     <div style={{ display: 'grid', gap: 'var(--spacing-6)' }}>
@@ -400,7 +400,7 @@ const ReceptionistPortal: React.FC = () => {
   )
 
   const renderCommunicationsView = () => {
-    const mockMessages = [
+    const mockMessages: any[] = [
       {
         id: 'MSG-001',
         from: 'Dr. Asha Mwangi',
@@ -464,7 +464,7 @@ const ReceptionistPortal: React.FC = () => {
             </div>
           }
         >
-          {[].map((message) => (
+          {mockMessages.map((message) => (
             <Card key={message.id} style={{
               marginBottom: 'var(--spacing-4)',
               backgroundColor: message.status === 'unread' ? 'var(--blue-50)' : 'white',
